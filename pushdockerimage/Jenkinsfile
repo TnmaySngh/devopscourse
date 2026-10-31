@@ -22,7 +22,11 @@ pipeline {
 
         stage('Docker Login') {
             steps {
-                sh 'echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin'
+                sh '''
+                    set +x
+                    echo "$DOCKERHUB_CREDS_PSW" | docker login \
+                    -u "$DOCKERHUB_CREDS_USR" --password-stdin
+                '''
             }
         }
 
@@ -35,7 +39,20 @@ pipeline {
 
     post {
         always {
-            sh 'docker logout || true'
+            script {
+                node {
+                    sh 'docker logout || true'
+                }
+            }
+            echo 'Pipeline execution completed'
+        }
+
+        success {
+            echo 'Docker image successfully pushed to Docker Hub!'
+        }
+
+        failure {
+            echo 'Docker image pipeline failed. Check console output.'
         }
     }
 }
